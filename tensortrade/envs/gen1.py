@@ -5,7 +5,7 @@ import numpy as np
 from datetime import timedelta
 
 from .base import BaseEnvironment, BaseNestedEnvironment
-from ..engines.base import BaseTradeEngine, PandasStateConfig, MarketOrder
+from ..kernels.base import BaseTradeKernel, PandasStateConfig, MarketOrder
 from btgym.spaces import DictSpace, ActionDictSpace, spaces
 
 from ray.tune.util import get_pinned_object
@@ -29,7 +29,7 @@ class TradeEnvironment(BaseEnvironment):
             action_space=None,
             action_map=None,
             skip_step=1,
-            engine_class_ref=BaseTradeEngine,
+            engine_class_ref=BaseTradeKernel,
             name='TradeEnvironment',
             **kwargs
     ):

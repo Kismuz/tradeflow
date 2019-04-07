@@ -4,43 +4,68 @@ import sys
 import pythonflow as pf
 
 
-class ResetOperation(pf.Operation):
+class Kernel(object):
+    """
+    Base stateful computational backend class.
+    """
+
+    def __init__(
+            self,
+            name='BaseEngine',
+            task=0,
+            log=None,
+            log_level=INFO,
+            **kwargs
+    ):
+        self.name = name
+        self.task = task
+
+        if log is None:
+            StreamHandler(sys.stdout).push_application()
+            self.log_level = log_level
+            self.log = Logger('{}_{}'.format(self.name, self.task), level=self.log_level)
+
+        else:
+            self.log = log
+            self.log_level = None
+
+        self.init_state = None
+        self.state = None
+        self.ready = False
+
+    def start(self, *args, **kwargs):
+        self.ready = True
+
+    def stop(self, *args, **kwargs):
+        self.ready = False
+        pass
+
+    def update_state(self, *args, **kwargs):
+        pass
+
+
+class StateOperation(pf.Operation):
 
     def __init__(
             self,
             kernel,
-            name='ResetOperation',
+            reset,
+            name='UpdateOrResetStateOperation',
             length=None,
             graph=None,
             dependencies=None,
-
             **inputs
     ):
-        super().__init__(name=name, length=length, graph=graph, dependencies=dependencies, **inputs)
+        super().__init__(reset, name=name, length=length, graph=graph, dependencies=dependencies, **inputs)
         self.kernel = kernel
 
-    def _evaluate(self, **inputs):
-        self.kernel.start(**inputs)
-        return self.kernel.state
+    def _evaluate(self, reset, **inputs):
+        if reset:
+            self.kernel.start(**inputs)
 
+        else:
+            self.kernel.update_state(**inputs)
 
-class UpdateStateOperation(pf.Operation):
-
-    def __init__(
-            self,
-            kernel,
-            name='UpdateStateOperation',
-            length=None,
-            graph=None,
-            dependencies=None,
-
-            **inputs
-    ):
-        super().__init__(name=name, length=length, graph=graph, dependencies=dependencies, **inputs)
-        self.kernel = kernel
-
-    def _evaluate(self, **inputs):
-        self.kernel.update_state(**inputs)
         return self.kernel.state
 
 
@@ -75,46 +100,24 @@ class Node(object):
             **kernel_kwargs
         )
 
-    def reset(self, length=None, graph=None, dependencies=None, **inputs):
+    def __call__(self, reset, length=None, graph=None, dependencies=None, **inputs):
         """
-        Reset operation constructor.
+        StateOperation constructor.
 
         Args:
+            reset:
             length:
             graph:
             dependencies:
             **inputs:
 
         Returns:
-            instance of ResetOperation
+            instance of StateOperation
         """
-
-        return ResetOperation(
+        return StateOperation(
+            reset=reset,
             kernel=self.kernel,
-            name=self.name + '_reset_op',
-            length=length,
-            graph=graph,
-            dependencies=dependencies,
-            **inputs
-        )
-
-    def update_state(self, length=None, graph=None, dependencies=None, **inputs):
-        """
-        UpdateStateOperation pf operation constructor.
-
-        Args:
-            length:
-            graph:
-            dependencies:
-            **inputs:
-
-        Returns:
-            instance of UpdateStateOperation constructor
-        """
-
-        return UpdateStateOperation(
-            kernel=self.kernel,
-            name=self.name + '_update_state_op',
+            name=self.name + '_state_op',
             length=length,
             graph=graph,
             dependencies=dependencies,

@@ -1,9 +1,10 @@
-from logbook import Logger, StreamHandler, WARNING, NOTICE, INFO, DEBUG
 import sys
 import copy
 
 import numpy as np
 from collections import namedtuple, OrderedDict
+from ..core import Kernel
+from btgym.spaces import DictSpace, ActionDictSpace, spaces
 
 import warnings
 
@@ -11,50 +12,14 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 
 
-class BaseEngine(object):
-    """
-    Base stateful computational backend class.
-    """
-
-    def __init__(
-            self,
-            name='BaseEngine',
-            task=0,
-            log=None,
-            log_level=INFO,
-            **kwargs
-    ):
-        self.name = name
-        self.task = task
-
-        if log is None:
-            StreamHandler(sys.stdout).push_application()
-            self.log_level = log_level
-            self.log = Logger('{}_{}'.format(self.name, self.task), level=self.log_level)
-
-        else:
-            self.log = log
-            self.log_level = None
-
-        self.init_state = None
-        self.state = None
-        self.ready = False
-
-    def start(self, *args, **kwargs):
-        self.ready = True
-
-    def stop(self, *args, **kwargs):
-        self.ready = False
-        pass
-
-    def update_state(self, *args, **kwargs):
-        pass
-
-
 PandasStateConfig = namedtuple('PandasStateConfig', ['columns', 'depth'])
 
+MarketOrder = namedtuple('MarketOrder', ['asset', 'type'])
 
-class BasePandasIterator(BaseEngine):
+OrderRecord = namedtuple('OrderRecord', ['type', 'size', 'result'])
+
+
+class BasePandasIterator(Kernel):
 
     def __init__(
             self,
@@ -125,9 +90,9 @@ class BasePandasIterator(BaseEngine):
     def get_data_slice(dataframe, columns, depth, position):
         return dataframe[columns][position - depth: position]
 
-    def get_state(self, position, state_config):
+    def get_dataflow_state(self, position, state_config):
         if isinstance(state_config, dict):
-            state = {key: self.get_state(position, value) for key, value in state_config.items()}
+            state = {key: self.get_dataflow_state(position, value) for key, value in state_config.items()}
         else:
             state = self.get_data_slice(self.dataframe, state_config.columns, state_config.depth, position)
 
@@ -141,11 +106,13 @@ class BasePandasIterator(BaseEngine):
 
     def update_state(self, inputs=None, *args, **kwargs):
         if self.ready:
-            self.state = self.get_state(self.start_pointer + self.iter_passed, self.state_config)
+            self.state = self.get_dataflow_state(self.start_pointer + self.iter_passed, self.state_config)
             self.iter_passed += 1
 
             if self.iter_passed >= self.sample_length:
                 self.ready = False
+
+            self.state['ready'] = self.ready
 
             self.log.debug(
                 'market iteration {} of {}, ready: {}'.format(self.iter_passed, self.sample_length, self.ready)
@@ -157,12 +124,36 @@ class BasePandasIterator(BaseEngine):
             raise IndexError(msg)
 
 
-MarketOrder = namedtuple('MarketOrder', ['asset', 'type'])
+class ActionToMarketOrder(Kernel):
+    """
+    Maps abstract MDP actions to executable Market Orders.
+    """
 
-OrderRecord = namedtuple('OrderRecord', ['type', 'size', 'result'])
+    def __init__(self, assets, name='ActionMap', **kwargs):
+        assets = list(assets)
+        super().__init__(name=name, **kwargs)
+        self.space = ActionDictSpace(
+            base_actions=[0, 1, 2, 3],
+            assets=assets
+        )
+        self.action_map = {0: None, 1: 'buy', 2: 'sell', 3: 'close'}
+
+    def start(self, action):
+        self.state = []
+
+    def update_state(self, action):
+        try:
+            assert self.space.contains(action)
+
+        except AssertionError:
+            e = 'Provided action `{}` is not a valid member of defined action space`'.format(action)
+            self.log.error(e)
+            raise TypeError(e)
+
+        self.state = [MarketOrder(asset, self.action_map[value]) for asset, value in action.items() if value != 0]
 
 
-class BasePortfolioManager(BaseEngine):
+class BasePortfolioManager(Kernel):
 
     def __init__(
             self,
@@ -196,7 +187,7 @@ class BasePortfolioManager(BaseEngine):
         self.step_order_record = None
 
     def update_portfolio_value(self, market_state):
-        self.assets_prices = np.concatenate([np.ones(1), market_state[self.assets].values[0, :]])
+        self.assets_prices = np.concatenate([np.ones(1)] + [market_state[asset].values[0, :] for asset in self.assets])
         self.portfolio_value = np.sum(np.asarray(list(self.portfolio.values())) * self.assets_prices)
 
     def submit_orders(self, orders):
@@ -306,9 +297,9 @@ class BasePortfolioManager(BaseEngine):
         self.last_portfolio_value = 0.0
         self.last_realised_portfolio_value = 0.0
         self.ready = True
-        self.update_state(market_state)
+        self.update_state(market_state, [])
 
-    def update_state(self, market_state, **kwargs):
+    def update_state(self, market_state, orders, **kwargs):
 
         # Execute pending orders:
         self.reset_just_closed()
@@ -338,9 +329,10 @@ class BasePortfolioManager(BaseEngine):
             unrealised_return=self.unrealised_return,
             order=self.step_order_record,
         )
+        self.submit_orders(orders)
 
 
-class BaseTradeEngine(BaseEngine):
+class BaseTradeKernel(Kernel):
 
     def __init__(
             self,

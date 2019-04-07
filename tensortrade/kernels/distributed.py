@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import copy
 
-from .base import BaseEngine, BaseTradeEngine, PandasStateConfig
+from .base import Kernel, BaseTradeKernel, PandasStateConfig
 from ..envs.gen1 import TradeEnvironment, BTgymCompatibleEnvironment
 
 import ray
@@ -78,7 +78,7 @@ class DataServer:
         return copy.copy(self.dataframe.loc[start_pointer: start_pointer + sample_length - 1])
 
 
-class DistributedPandasIterator(BaseEngine):
+class DistributedPandasIterator(Kernel):
 
     def __init__(
             self,
@@ -177,7 +177,7 @@ class DistributedPandasIterator(BaseEngine):
             raise IndexError(msg)
 
 
-class BaseTradeEngineD1(BaseTradeEngine):
+class BaseTradeEngineD1(BaseTradeKernel):
 
     def __init__(self, name='TradeEngineD1', **kwargs):
         super().__init__(market_engine_ref=DistributedPandasIterator, name=name, **kwargs)
