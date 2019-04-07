@@ -2,8 +2,6 @@ from logbook import Logger, StreamHandler, WARNING, NOTICE, INFO, DEBUG
 import sys
 
 import pythonflow as pf
-import numpy as np
-import pandas as pd
 
 
 class ResetOperation(pf.Operation):
