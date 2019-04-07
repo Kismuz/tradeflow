@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2017 Andrew Muzikin
+# Copyright (C) 2019 Andrew Muzikin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,8 @@ from setuptools import setup
 
 setup(
     name='tensortrade',
-    description='--',
-    keywords='--',
+    description='modelling algorithmic trading domains as directed acyclic graphs',
+    keywords='',
     author='Andrew Muzikin',
     author_email='muzikinae@gmail.com',
     url='https://github.com/Kismuz/tensortrade',
@@ -34,7 +34,7 @@ setup(
     },
     license='GPLv3+',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 1 - Planning',
         'Programming Language :: Python :: 3.6',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
