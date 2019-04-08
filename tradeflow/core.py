@@ -6,7 +6,8 @@ import pythonflow as pf
 
 class Kernel(object):
     """
-    Base stateful computational backend class.
+    Base stateful execution backend class.
+    Todo: local /remote
     """
 
     def __init__(
@@ -45,7 +46,9 @@ class Kernel(object):
 
 
 class StateOperation(pf.Operation):
-
+    """
+    This class implements kernel to model graph connection by providing an operation (graph node).
+    """
     def __init__(
             self,
             kernel,
@@ -70,7 +73,9 @@ class StateOperation(pf.Operation):
 
 
 class Node(object):
-
+    """
+    Connects stateful computation object (kernel) to dataflow model
+    """
     def __init__(
             self,
             kernel_class_ref,

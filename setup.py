@@ -26,10 +26,10 @@ setup(
     keywords='',
     author='Andrew Muzikin',
     author_email='muzikinae@gmail.com',
-    url='https://github.com/Kismuz/tensortrade',
+    url='https://github.com/Kismuz/tradeflow',
     project_urls={
 
-        'Source': 'https://github.com/Kismuz/tensortrade',
+        'Source': 'https://github.com/Kismuz/tradeflow',
 
     },
     license='GPLv3+',
