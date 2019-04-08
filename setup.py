@@ -21,7 +21,7 @@ from setuptools import setup
 
 
 setup(
-    name='tensortrade',
+    name='tradeflow',
     description='modelling algorithmic trading domains as directed acyclic graphs',
     keywords='',
     author='Andrew Muzikin',
