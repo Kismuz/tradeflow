@@ -49,7 +49,7 @@ class BaseEnvironment(object):
 
     def reset(self, *args, **kwargs):
         self.engine.stop(*args, **kwargs)
-        self.engine.start(*args, **kwargs)
+        self.engine._start(*args, **kwargs)
         self.done = False
         self.step_counter = 0
 
@@ -57,7 +57,7 @@ class BaseEnvironment(object):
 
     def step(self, action):
         if not self.done:
-            self.engine.update_state(inputs=action)
+            self.engine._update_state(inputs=action)
             obs = self.get_state()
             reward = self.get_reward()
             info = self.get_info()

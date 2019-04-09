@@ -1,3 +1,4 @@
+from logbook import INFO
 import sys
 import copy
 
@@ -19,6 +20,74 @@ MarketOrder = namedtuple('MarketOrder', ['asset', 'type'])
 OrderRecord = namedtuple('OrderRecord', ['type', 'size', 'result'])
 
 
+class IdentityKernel(Kernel):
+
+    def __init__(
+            self,
+            name='Identity',
+            task=0,
+            log=None,
+            log_level=INFO,
+    ):
+        super().__init__(name=name, task=task, log=log, log_level=log_level)
+        self.state = None
+
+    def update_state(self, inputs):
+        self.state = inputs
+        return self.state
+
+
+class BAsePandasEpisodeSampler(Kernel):
+    """
+    Samples episodes from pandas dataset.
+    """
+    def __init__(
+            self,
+            dataframe,
+            name='EpisodeSampler',
+            task=0,
+            log=None,
+            log_level=INFO,
+            ):
+        super().__init__(name=name, task=task, log=log, log_level=log_level)
+        self.dataframe = dataframe
+        self.iterations = 0
+        self.pn = 0
+
+    def update_state(self, sample_length):
+        return self.sample(sample_length)
+
+    def sample(self, sample_length):
+        self.log.debug('sample #{}'.format(self.iterations))
+        try:
+            assert sample_length <= self.dataframe.shape[0]
+
+        except AssertionError as e:
+            e = 'Expected sample be shorter than data length, got: {} and {}'.format(
+                sample_length, self.dataframe.shape[0]
+            )
+            self.log.error(e)
+            raise AssertionError(e)
+
+        if sample_length > 0:
+            sample_start_interval = dict(
+                low=0,
+                high=self.dataframe.shape[0] - sample_length + 1
+            )
+        else:
+            sample_length = self.dataframe.shape[0]
+            sample_start_interval = dict(
+                low=0,
+                high=1,
+            )
+        start_pointer = np.random.randint(**sample_start_interval)
+        self.log.debug(
+            'sample start: {}, end: {}, len: {}'.format(start_pointer, start_pointer + sample_length, sample_length)
+        )
+        self.iterations += 1
+        return copy.copy(self.dataframe.loc[start_pointer: start_pointer + sample_length - 1])
+
+
 class BasePandasIterator(Kernel):
 
     def __init__(
@@ -26,10 +95,12 @@ class BasePandasIterator(Kernel):
             dataframe,
             sample_length,
             state_config,
-            name='MarketIterator',
-            **kwargs
+            name='MarketDataIterator',
+            task=0,
+            log=None,
+            log_level=INFO,
     ):
-        super().__init__(name=name, **kwargs)
+        super().__init__(name=name, task=task, log=log, log_level=log_level)
 
         self.dataframe = dataframe
         self.sample_length = sample_length
@@ -98,13 +169,22 @@ class BasePandasIterator(Kernel):
 
         return state
 
-    def start(self, start_pointer=None):
+    def update_state(self, reset, inputs=None):
+        if reset:
+            self._start()
+
+        else:
+            self._update_state(inputs)
+
+        return self.state
+
+    def _start(self, start_pointer=None):
         self.update_start_pointer(start_pointer)
         self.iter_passed = 0
         self.ready = True
-        self.update_state()
+        self._update_state()
 
-    def update_state(self, inputs=None, *args, **kwargs):
+    def _update_state(self, inputs=None):
         if self.ready:
             self.state = self.get_dataflow_state(self.start_pointer + self.iter_passed, self.state_config)
             self.iter_passed += 1
@@ -129,19 +209,35 @@ class ActionToMarketOrder(Kernel):
     Maps abstract MDP actions to executable Market Orders.
     """
 
-    def __init__(self, assets, name='ActionMap', **kwargs):
+    def __init__(
+            self,
+            assets,
+            name='ActionMap',
+            task=0,
+            log=None,
+            log_level=INFO,
+    ):
         assets = list(assets)
-        super().__init__(name=name, **kwargs)
+        super().__init__(name=name, task=task, log=log, log_level=log_level)
         self.space = ActionDictSpace(
             base_actions=[0, 1, 2, 3],
             assets=assets
         )
         self.action_map = {0: None, 1: 'buy', 2: 'sell', 3: 'close'}
 
-    def start(self, action):
+    def update_state(self, reset, action):
+        if reset:
+            self._start(action)
+
+        else:
+            self._update_state(action)
+
+        return self.state
+
+    def _start(self, action):
         self.state = []
 
-    def update_state(self, action):
+    def _update_state(self, action):
         try:
             assert self.space.contains(action)
 
@@ -163,9 +259,11 @@ class BasePortfolioManager(Kernel):
             orders=('buy', 'sell', 'close'),
             assets=('default_asset',),
             name='PortfolioManager',
-            **kwargs
+            task=0,
+            log=None,
+            log_level=INFO,
     ):
-        super().__init__(name=name, **kwargs)
+        super().__init__(name=name, task=task, log=log, log_level=log_level)
 
         self.max_position_size = max_position_size
         self.order_size = abs(order_size)
@@ -278,7 +376,16 @@ class BasePortfolioManager(Kernel):
         for k in self.asset_just_closed.keys():
             self.asset_just_closed[k]= False
 
-    def start(self, market_state, **kwargs):
+    def update_state(self, reset, market_state, orders):
+        if reset:
+            self._start(market_state)
+
+        else:
+            self._update_state(market_state, orders)
+
+        return self.state
+
+    def _start(self, market_state):
         self.portfolio = OrderedDict(
             [
                 (name, amount) for name, amount in zip(['cash'] + self.assets, np.zeros(len(self.assets) + 1))
@@ -297,9 +404,9 @@ class BasePortfolioManager(Kernel):
         self.last_portfolio_value = 0.0
         self.last_realised_portfolio_value = 0.0
         self.ready = True
-        self.update_state(market_state, [])
+        self._update_state(market_state, [])
 
-    def update_state(self, market_state, orders, **kwargs):
+    def _update_state(self, market_state, orders):
 
         # Execute pending orders:
         self.reset_just_closed()
@@ -328,6 +435,7 @@ class BasePortfolioManager(Kernel):
             realised_return=self.realised_return,
             unrealised_return=self.unrealised_return,
             order=self.step_order_record,
+            market_state=market_state,
         )
         self.submit_orders(orders)
 #

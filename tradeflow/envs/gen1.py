@@ -122,7 +122,7 @@ class TradeEnvironment(BaseEnvironment):
     def reset(self, *args, **kwargs):
         self.reset_state_accum()
         self.engine.stop(*args, **kwargs)
-        self.engine.start(*args, **kwargs)
+        self.engine._start(*args, **kwargs)
         self.update_state_accum()
         self.done = False
         self.step_counter = 0
@@ -135,7 +135,7 @@ class TradeEnvironment(BaseEnvironment):
 
         if not self.done:
             for i in range(self.skip_step):
-                self.engine.update_state()
+                self.engine._update_state()
                 self.update_state_accum()
                 self.done = self.get_done()
 

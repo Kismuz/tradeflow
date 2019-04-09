@@ -128,7 +128,7 @@ class DistributedPandasIterator(Kernel):
 
         return state
 
-    def start(self):
+    def _start(self):
         # for i in range(4):
         #     self.log.warning('pinging ds...')
         #     #p = self.dataserver.ping.remote(task=self.task)
@@ -153,9 +153,9 @@ class DistributedPandasIterator(Kernel):
         self.start_pointer = self.sample_max_depth
         self.iter_passed = 0
         self.ready = True
-        self.update_state()
+        self._update_state()
 
-    def update_state(self, inputs=None, *args, **kwargs):
+    def _update_state(self, inputs=None, *args, **kwargs):
         if self.ready:
             self.state = self.get_state(self.start_pointer + self.iter_passed, self.state_config)
             self.iter_passed += 1
