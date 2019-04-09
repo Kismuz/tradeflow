@@ -7,7 +7,8 @@ import pythonflow as pf
 class Kernel(object):
     """
     Base stateful execution backend class.
-    Todo: local /remote
+    Encapsulates actual computations to get node state.
+    Todo: add explicit computation device placement: ~local / ray.remote
     """
 
     def __init__(
@@ -45,15 +46,15 @@ class Kernel(object):
         pass
 
 
-class StateOperation(pf.Operation):
+class GetStateOperation(pf.Operation):
     """
-    This class implements kernel to model graph connection by providing an operation (graph node).
+    This class implements node in-graph connectivity  by making an operation which returns actual node state.
     """
     def __init__(
             self,
             kernel,
             reset,
-            name='UpdateOrResetStateOperation',
+            name='BaseUpdateOrResetStateOperation',
             length=None,
             graph=None,
             dependencies=None,
@@ -74,7 +75,9 @@ class StateOperation(pf.Operation):
 
 class Node(object):
     """
-    Connects stateful computation object (kernel) to dataflow model
+    Base modelling object.
+    Encapsulates stateful computation object via kernel and dataflow graph connectivity via StateOperation.
+    TODO: maybe define dedicated State class ~ tf.Tensor
     """
     def __init__(
             self,
@@ -107,8 +110,7 @@ class Node(object):
 
     def __call__(self, reset, length=None, graph=None, dependencies=None, **inputs):
         """
-        StateOperation constructor.
-
+        StateOperation constructor. Provides graph connectivity
         Args:
             reset:
             length:
@@ -119,7 +121,7 @@ class Node(object):
         Returns:
             instance of StateOperation
         """
-        return StateOperation(
+        return GetStateOperation(
             reset=reset,
             kernel=self.kernel,
             name=self.name + '_state_op',

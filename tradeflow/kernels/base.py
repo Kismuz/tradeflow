@@ -330,49 +330,49 @@ class BasePortfolioManager(Kernel):
             order=self.step_order_record,
         )
         self.submit_orders(orders)
-
-
-class BaseTradeKernel(Kernel):
-
-    def __init__(
-            self,
-            market_config,
-            manager_config,
-            market_engine_ref=BasePandasIterator,
-            manager_engine_ref=BasePortfolioManager,
-            name='TradeEngine',
-            **kwargs
-    ):
-        super().__init__(name=name, **kwargs)
-        self.market = market_engine_ref(name=self.name + 'Market', task=self.task, log=self.log, **market_config)
-        self.manager = manager_engine_ref(name=self.name + 'Manager', task=self.task, log=self.log, **manager_config)
-        self.ready = self.market.ready
-
-    def start(self, *args, **kwargs):
-        self.market.start(*args, **kwargs)
-        try:
-            assert 'assets' in set(self.market.state.keys())
-
-        except AssertionError:
-            msg = 'Expected iterator state contain `assets` key, found: {}'.format(set(self.market.state.keys()))
-            self.log.error(msg)
-            raise KeyError(msg)
-
-        self.manager.start(market_state=self.market.state['assets'], **kwargs)
-        self.state = dict(
-            market=self.market.state,
-            manager=self.manager.state
-        )
-        self.ready = self.market.ready
-
-    def update_state(self, *args, **kwargs):
-        self.market.update_state()
-        self.manager.update_state(market_state=self.market.state['assets'])
-        self.ready = self.market.ready
-        self.state = dict(
-            market=self.market.state,
-            manager=self.manager.state
-        )
-
-    def submit_orders(self, *args, **kwargs):
-        self.manager.submit_orders(*args, **kwargs)
+#
+#
+# class BaseTradeKernel(Kernel):
+#
+#     def __init__(
+#             self,
+#             market_config,
+#             manager_config,
+#             market_engine_ref=BasePandasIterator,
+#             manager_engine_ref=BasePortfolioManager,
+#             name='TradeEngine',
+#             **kwargs
+#     ):
+#         super().__init__(name=name, **kwargs)
+#         self.market = market_engine_ref(name=self.name + 'Market', task=self.task, log=self.log, **market_config)
+#         self.manager = manager_engine_ref(name=self.name + 'Manager', task=self.task, log=self.log, **manager_config)
+#         self.ready = self.market.ready
+#
+#     def start(self, *args, **kwargs):
+#         self.market.start(*args, **kwargs)
+#         try:
+#             assert 'assets' in set(self.market.state.keys())
+#
+#         except AssertionError:
+#             msg = 'Expected iterator state contain `assets` key, found: {}'.format(set(self.market.state.keys()))
+#             self.log.error(msg)
+#             raise KeyError(msg)
+#
+#         self.manager.start(market_state=self.market.state['assets'], **kwargs)
+#         self.state = dict(
+#             market=self.market.state,
+#             manager=self.manager.state
+#         )
+#         self.ready = self.market.ready
+#
+#     def update_state(self, *args, **kwargs):
+#         self.market.update_state()
+#         self.manager.update_state(market_state=self.market.state['assets'])
+#         self.ready = self.market.ready
+#         self.state = dict(
+#             market=self.market.state,
+#             manager=self.manager.state
+#         )
+#
+#     def submit_orders(self, *args, **kwargs):
+#         self.manager.submit_orders(*args, **kwargs)
