@@ -1,10 +1,12 @@
 from .core import Node
-from tradeflow.kernels.base import BasePandasIterator, BasePortfolioManager, ActionToMarketOrder, IdentityKernel
+from tradeflow.kernel.base import IdentityKernel
+from tradeflow.kernel.manager import ActionToMarketOrder, BasePortfolioManager
+from tradeflow.kernel.iterator import PandasMarketEpisodeIterator, PandasMarketStepIterator
 
 
 class Identity(Node):
     """
-    Practical purpose of this node is that when placed locally after any remotedly computed node,
+    Practical purpose of this node is as follows: when placed locally after any remotely executed node,
     it forces remote inputs evaluation and returns actual computed state.
     """
     def __init__(self, name='IdentityNode', **kwargs):
@@ -15,13 +17,25 @@ class Identity(Node):
         )
 
 
-class PandasMarketData(Node):
+class PandasMarketEpisode(Node):
+    """
+    Basic iterative market episode data provider.
+    """
+    def __init__(self, name='PdMarketEpisodeIterator', **kwargs):
+        super().__init__(
+            kernel_class_ref=PandasMarketEpisodeIterator,
+            name=name,
+            **kwargs
+        )
+
+
+class PandasMarketStep(Node):
     """
     Basic iterative market data provider.
     """
     def __init__(self, name='PdMarketDataIterator', **kwargs):
         super().__init__(
-            kernel_class_ref=BasePandasIterator,
+            kernel_class_ref=PandasMarketStepIterator,
             name=name,
             **kwargs
         )

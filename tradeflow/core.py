@@ -70,7 +70,7 @@ class GetStateOperation(pf.Operation):
         self.kernel_device = kernel_device
 
     def _evaluate(self, **inputs):
-        # Inputs can be either python objects or ray object store id's (in case dependent node's kernels were ray tasks)
+        # Inputs can be either python objects or ray object store id's (in case dependent node's kernel were ray tasks)
         # and should be treated accordingly:
         # if current kernel is local one - we should get actual input values via ray.get() methods; pass ray Id's
         # as is otherwise:
@@ -98,7 +98,7 @@ class Node(object):
     """
     Base model building block.
     Encapsulates stateful computation object via kernel and dataflow graph connectivity via StateOperation.
-    TODO: maybe define dedicated State class ~ tf.Tensor-like
+    TODO: ? maybe define dedicated State class ~ tf.Tensor-like
     """
     def __init__(
             self,
@@ -181,10 +181,19 @@ class Node(object):
         Returns:
             instance of StateOperation
         """
+        if self.kernel_device == KernelDevice.RAY:
+            name_suffix = '_state_op_remote'
+
+        elif self.kernel_device == KernelDevice.LOCAL:
+            name_suffix = '_state_op_local'
+
+        else:
+            name_suffix = '_state_op_WTF?'
+            
         return GetStateOperation(
             kernel=self.kernel,
             kernel_device=self.kernel_device,
-            name=self.name + '_state_op',
+            name=self.name + name_suffix,
             length=length,
             graph=graph,
             dependencies=dependencies,

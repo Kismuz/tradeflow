@@ -5,7 +5,7 @@ import numpy as np
 from datetime import timedelta
 
 from .base import BaseEnvironment, BaseNestedEnvironment
-from ..kernels.base import BaseTradeKernel, PandasStateConfig, MarketOrder
+from ..kernel.base import BaseTradeKernel, PandasStateConfig, MarketOrder
 from btgym.spaces import DictSpace, ActionDictSpace, spaces
 
 from ray.tune.util import get_pinned_object

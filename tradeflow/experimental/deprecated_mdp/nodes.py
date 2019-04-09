@@ -1,5 +1,5 @@
 from .core import Node
-from ..mdp import kernels as k
+from ..deprecated_mdp import kernels as k
 
 
 # Toy nodes
