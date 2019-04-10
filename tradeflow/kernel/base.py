@@ -69,7 +69,6 @@ class CheckIfDone(Kernel):
 class StateToObservation(Kernel):
     """
     Maps dictionary of heterogeneous input states to observation tensor.
-    Supports two modes
     """
     def __init__(
             self,
