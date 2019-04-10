@@ -12,7 +12,6 @@ class ActionToMarketOrder(Kernel):
     """
     Maps abstract MDP actions to executable Market Orders.
     """
-
     def __init__(
             self,
             assets,

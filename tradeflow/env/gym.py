@@ -33,8 +33,8 @@ class Environment(gym.Env):
         self.episode_duration = episode_duration
 
     def reset(self):
-        obs_market, obs_portfolio = self.graph(
-            [self.output['market_state'], self.output['portfolio_state']],
+        observation = self.graph(
+            self.output['observation'],
             {
                 self.input['reset']: True,
                 self.input['action']: None,
@@ -42,11 +42,11 @@ class Environment(gym.Env):
                 self.input['episode_duration']: self.episode_duration,
             }
         )
-        return obs_market, obs_portfolio
+        return observation
 
     def step(self, action):
-        obs_market, obs_portfolio, reward, done = self.graph(
-            [self.output['market_state'], self.output['portfolio_state'], self.output['reward'], self.output['done']],
+        observation, reward, done = self.graph(
+            [self.output['observation'], self.output['reward'], self.output['done']],
             {
                 self.input['reset']: False,
                 self.input['action']: action,
@@ -54,11 +54,7 @@ class Environment(gym.Env):
                 self.input['episode_duration']: None,
             }
         )
-        return (obs_market, obs_portfolio), reward, '', done
-
-
-def make_environment(env_config, env_class_ref=Environment):
-    return env_class_ref(**env_config)
+        return observation, reward, '', done
 
 
 class EnvironmentConstructor(object):
@@ -95,7 +91,7 @@ class EnvironmentConstructor(object):
         nodes = self._build_nodes(self.nodes_config)
         graph, graph_input, graph_output = self._build_graph(nodes)
         action_space = nodes['order'].kernel.space
-        observation_space = None
+        observation_space = nodes['observation'].kernel.space
         env = self.env_class_ref(
             graph=graph,
             graph_input=graph_input,

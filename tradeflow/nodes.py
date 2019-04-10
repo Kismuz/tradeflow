@@ -1,5 +1,5 @@
 from .core import Node
-from tradeflow.kernel.base import IdentityKernel, CheckIfDone
+from tradeflow.kernel.base import IdentityKernel, CheckIfDone, StateToObservation
 from tradeflow.kernel.manager import  BasePortfolioManager
 from tradeflow.kernel.action import ActionToMarketOrder
 from tradeflow.kernel.reward import ClosedTradeRewardFn
@@ -88,6 +88,18 @@ class Done(Node):
     def __init__(self, name='CheckIfDone', **kwargs):
         super().__init__(
             kernel_class_ref=CheckIfDone,
+            name=name,
+            **kwargs
+        )
+
+
+class Observation(Node):
+    """
+    Maps states to [possibly nested] observation tensors
+    """
+    def __init__(self, name='StateToObservation', **kwargs):
+        super().__init__(
+            kernel_class_ref=StateToObservation,
             name=name,
             **kwargs
         )
