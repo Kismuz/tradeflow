@@ -29,12 +29,12 @@ class ActionToMarketOrder(Kernel):
         )
         self.action_map = {0: None, 1: 'buy', 2: 'sell', 3: 'close'}
 
-    def update_state(self, reset, action):
+    def update_state(self, input_state, reset):
         if reset:
-            self._start(action)
+            self._start(input_state)
 
         else:
-            self._update_state(action)
+            self._update_state(input_state)
 
         return self.state
 

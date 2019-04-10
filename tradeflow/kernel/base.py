@@ -36,20 +36,26 @@ class CheckIfDone(Kernel):
     def __init__(
             self,
             name='CheckIfDone',
+            pass_input_state=False,
             task=0,
             log=None,
             log_level=INFO,
     ):
         super().__init__(name=name, task=task, log=log, log_level=log_level)
+        self.pass_input_state = pass_input_state
         self.state = True
 
-    def update_state(self, state):
+    def update_state(self, input_state):
         try:
-            self.state = not state['ready']
+            self.state = not input_state['ready']
 
         except KeyError:
             e = 'Expected key `ready` not found in input state'
             self.log.error(e)
             raise ValueError(e)
 
-        return self.state
+        if self.pass_input_state:
+            return self.state, input_state
+
+        else:
+            return self.state

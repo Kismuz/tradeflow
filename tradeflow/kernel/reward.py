@@ -25,12 +25,12 @@ class ClosedTradeRewardFn(Kernel):
         self.scale = scale
         self.clip = abs(clip)
 
-    def update_state(self, reset, state):
+    def update_state(self, reset, input_state):
         if reset:
             self.state = 0.0
 
         else:
-            self._update_state(state)
+            self._update_state(input_state)
 
         return self.state
 

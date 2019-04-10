@@ -32,8 +32,8 @@ class PandasMarketEpisodeIterator(Kernel):
         self.iterations = 0
         self.pn = 0
 
-    def update_state(self, reset, data, sample_length):
-        self.dataframe = data
+    def update_state(self, input_state, reset, sample_length):
+        self.dataframe = input_state
 
         if reset:
             self.state = self.sample(sample_length)
@@ -122,9 +122,9 @@ class PandasMarketStepIterator(Kernel):
 
         return state
 
-    def update_state(self, reset, data):
+    def update_state(self, input_state, reset):
         if reset:
-            self._start(data)
+            self._start(input_state)
 
         self._update_state()
 

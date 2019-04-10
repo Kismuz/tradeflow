@@ -5,7 +5,7 @@ import numpy as np
 import copy
 
 from .base import Kernel, BaseTradeKernel, PandasStateConfig
-from ..envs.gen1 import TradeEnvironment, BTgymCompatibleEnvironment
+from ..deprecared_envs.gen1 import TradeEnvironment, BTgymCompatibleEnvironment
 
 import ray
 

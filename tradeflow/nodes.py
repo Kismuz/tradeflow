@@ -73,7 +73,7 @@ class TradeReward(Node):
     """
     Basic reward function.
     """
-    def __init(self, name='ClosedTradeRewardFn', **kwargs):
+    def __init__(self, name='ClosedTradeRewardFn', **kwargs):
         super().__init__(
             kernel_class_ref=ClosedTradeRewardFn,
             name=name,
@@ -85,7 +85,7 @@ class Done(Node):
     """
     Checks termination condition.
     """
-    def __init(self, name='CheckIfDone', **kwargs):
+    def __init__(self, name='CheckIfDone', **kwargs):
         super().__init__(
             kernel_class_ref=CheckIfDone,
             name=name,

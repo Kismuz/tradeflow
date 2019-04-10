@@ -74,7 +74,8 @@ class GetStateOperation(pf.Operation):
         # and should be treated accordingly:
         # if current kernel is local one - we should get actual input values via ray.get() methods; pass ray Id's
         # as is otherwise:
-        print(self.name, inputs)
+
+        # self.log.debug(self.name, inputs)
         if self.kernel_device == KernelDevice.LOCAL:
             normalized_inputs = self._get_remote_inputs(**inputs)
             return self.kernel.update_state(**normalized_inputs)
@@ -85,7 +86,7 @@ class GetStateOperation(pf.Operation):
     @staticmethod
     def _get_remote_inputs(**inputs):
         """
-        Substitute remote ray.object Id's (if any) with actual values
+        Substitutes remote ray.object Id's (if any) with actual values
         """
         for key, value in inputs.items():
             if isinstance(value, ray._raylet.ObjectID):
@@ -171,8 +172,8 @@ class Node(object):
     def __call__(self, length=None, graph=None, dependencies=None, **inputs):
         """
         StateOperation constructor. Provides graph connectivity
+
         Args:
-            reset:
             length:
             graph:
             dependencies:

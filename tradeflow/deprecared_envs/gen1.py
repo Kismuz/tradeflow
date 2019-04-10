@@ -322,7 +322,7 @@ class BTgymCompatibleEnvironment(BaseNestedEnvironment):
             assert self.envs['train'].observation_space.shape == self.envs['test'].observation_space.shape
 
         except AssertionError:
-            msg = 'Expected identical observation space shapes for train and test envs., got: {} and {}'.\
+            msg = 'Expected identical observation space shapes for train and test deprecared_envs., got: {} and {}'.\
                 format(self.envs['train'].observation_space, self.envs['test'].observation_space)
             raise AssertionError(msg)
 
@@ -330,7 +330,7 @@ class BTgymCompatibleEnvironment(BaseNestedEnvironment):
             assert self.envs['train'].action_space.shape == self.envs['test'].action_space.shape
 
         except AssertionError:
-            msg = 'Expected identical action space shapes for train and test envs., got: {} and {}'.\
+            msg = 'Expected identical action space shapes for train and test deprecared_envs., got: {} and {}'.\
                 format(self.envs['train'].action_space, self.envs['test'].action_space)
             raise AssertionError(msg)
 

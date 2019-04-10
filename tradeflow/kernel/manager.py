@@ -27,6 +27,7 @@ class BasePortfolioManager(Kernel):
             orders=('buy', 'sell', 'close'),
             assets=('default_asset',),
             name='PortfolioManager',
+            pass_input_state=False,
             task=0,
             log=None,
             log_level=INFO,
@@ -38,6 +39,7 @@ class BasePortfolioManager(Kernel):
         self.order_commission = abs(order_commission)
         self.orders = orders
         self.assets = list(assets)
+        self.pass_input_state = pass_input_state
 
         self.portfolio = None
         self.portfolio_value = None
@@ -144,14 +146,18 @@ class BasePortfolioManager(Kernel):
         for k in self.asset_just_closed.keys():
             self.asset_just_closed[k]= False
 
-    def update_state(self, reset, state, orders):
+    def update_state(self, input_state, reset, orders):
         if reset:
-            self._start(state)
+            self._start(input_state)
 
         else:
-            self._update_state(state, orders)
+            self._update_state(input_state, orders)
 
-        return self.state
+        if self.pass_input_state:
+            return self.state, input_state
+
+        else:
+            return self.state
 
     def _start(self, market_state):
         self.portfolio = OrderedDict(
@@ -200,9 +206,9 @@ class BasePortfolioManager(Kernel):
             portfolio=copy.deepcopy(self.portfolio),
             portfolio_value=self.portfolio_value,
             broker_value=self.portfolio_value,  # btgym compatibility
-            realised_return=self.realised_return,
-            unrealised_return=self.unrealised_return,
+            realized_return=self.realised_return,
+            unrealized_return=self.unrealised_return,
             order=self.step_order_record,
-            market_state=market_state,
         )
+
         self.submit_orders(orders)

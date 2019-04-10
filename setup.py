@@ -49,6 +49,8 @@ setup(
     ],
     version='0.0.8',
     install_requires=[
+        'gym',
+        'ray',
         'pythonflow',
         'numpy',
         'pandas',
