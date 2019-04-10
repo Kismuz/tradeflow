@@ -1,11 +1,11 @@
 from logbook import INFO
 import sys
 import copy
-
 import numpy as np
-from btgym.spaces import  ActionDictSpace
 from collections import namedtuple, OrderedDict
+
 from ..core import Kernel
+from .action import MarketOrder
 
 
 import warnings
@@ -14,54 +14,7 @@ if not sys.warnoptions:
     warnings.simplefilter("ignore")
 
 
-MarketOrder = namedtuple('MarketOrder', ['asset', 'type'])
-
 OrderRecord = namedtuple('OrderRecord', ['type', 'size', 'result'])
-
-
-class ActionToMarketOrder(Kernel):
-    """
-    Maps abstract MDP actions to executable Market Orders.
-    """
-
-    def __init__(
-            self,
-            assets,
-            name='ActionMap',
-            task=0,
-            log=None,
-            log_level=INFO,
-    ):
-        assets = list(assets)
-        super().__init__(name=name, task=task, log=log, log_level=log_level)
-        self.space = ActionDictSpace(
-            base_actions=[0, 1, 2, 3],
-            assets=assets
-        )
-        self.action_map = {0: None, 1: 'buy', 2: 'sell', 3: 'close'}
-
-    def update_state(self, reset, action):
-        if reset:
-            self._start(action)
-
-        else:
-            self._update_state(action)
-
-        return self.state
-
-    def _start(self, action):
-        self.state = []
-
-    def _update_state(self, action):
-        try:
-            assert self.space.contains(action)
-
-        except AssertionError:
-            e = 'Provided action `{}` is not a valid member of defined action space`'.format(action)
-            self.log.error(e)
-            raise TypeError(e)
-
-        self.state = [MarketOrder(asset, self.action_map[value]) for asset, value in action.items() if value != 0]
 
 
 class BasePortfolioManager(Kernel):
@@ -191,12 +144,12 @@ class BasePortfolioManager(Kernel):
         for k in self.asset_just_closed.keys():
             self.asset_just_closed[k]= False
 
-    def update_state(self, reset, market_state, orders):
+    def update_state(self, reset, state, orders):
         if reset:
-            self._start(market_state)
+            self._start(state)
 
         else:
-            self._update_state(market_state, orders)
+            self._update_state(state, orders)
 
         return self.state
 
