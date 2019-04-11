@@ -143,6 +143,7 @@ class BasePortfolioManager(Kernel):
             )
 
     def reset_just_closed(self):
+        # self.log.debug('self.asset_just_closed: ', self.asset_just_closed)
         for k in self.asset_just_closed.keys():
             self.asset_just_closed[k]= False
 

@@ -32,35 +32,40 @@ class Environment(gym.Env):
         self.dataset = dataset
         self.episode_duration = episode_duration
 
+    def _evaluate_graph(self, feed_dict):
+        fetches = self.graph(
+            [self.output['observation'], self.output['reward'], self.output['done']], feed_dict
+        )
+        return fetches
+
     def reset(self):
-        observation = self.graph(
-            self.output['observation'],
-            {
+        # Redundant: need to run entire graph to properly reset states.
+        # todo: maybe implement specific op to reset entire graph state?
+        feed_dict = {
                 self.input['reset']: True,
-                self.input['action']: None,
+                self.input['action']: 0,
                 self.input['dataset']: self.dataset,
                 self.input['episode_duration']: self.episode_duration,
             }
-        )
+        observation, reward, done = self._evaluate_graph(feed_dict)
         return observation
 
     def step(self, action):
-        observation, reward, done = self.graph(
-            [self.output['observation'], self.output['reward'], self.output['done']],
-            {
+        feed_dict = {
                 self.input['reset']: False,
                 self.input['action']: action,
                 self.input['dataset']: None,
                 self.input['episode_duration']: None,
             }
-        )
-        return observation, reward, '', done
+        observation, reward, done = self._evaluate_graph(feed_dict)
+        return observation, reward, done, dict()
 
 
 class EnvironmentConstructor(object):
     """
     Service class: builds mdp dataflow graph and wraps it with environment API
     """
+    # TODO: refract: pack all init args to env_config kwarg of __call__ method
 
     def __init__(self, env_class_ref, nodes_config=None, build_graph_fn=None):
         """
@@ -78,12 +83,12 @@ class EnvironmentConstructor(object):
         if build_graph_fn is not None:
             self._build_graph = build_graph_fn
 
-    def __call__(self, env_parameters):
+    def __call__(self, env_config):
         """
         Instantiates environment object.
 
         Args:
-            env_parameters:    env hyperparameters dict
+            env_config:    env hyperparameters dict
 
         Returns:
             instance of env_class_ref
@@ -98,7 +103,7 @@ class EnvironmentConstructor(object):
             graph_output=graph_output,
             action_space=action_space,
             observation_space=observation_space,
-            **env_parameters
+            **env_config
         )
         return env
 

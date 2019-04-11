@@ -5,7 +5,7 @@ import pandas as pd
 
 from tradeflow import KernelDevice, PandasStateConfig
 from tradeflow.nodes import PandasMarketEpisode, PandasMarketStep, PortfolioManager
-from tradeflow.nodes import ActionToOrder, Done, TradeReward, Observation
+from tradeflow.nodes import ActionToOrder, Done, TradeReward, ToDictSpace
 
 from tradeflow import Environment as Env
 from tradeflow.env.gym import EnvironmentConstructor
@@ -81,7 +81,7 @@ nodes_config = dict(
         log_level=LOG_LEVEL,
     ),
     observation=dict(
-        class_ref=Observation,
+        class_ref=ToDictSpace,
         space_config = {
             'market_features': (FEATURES_DEPTH, len(FEATURES_COLUMNS)),
             'value': (1,),

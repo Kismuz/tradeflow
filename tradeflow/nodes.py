@@ -1,7 +1,7 @@
 from .core import Node
-from tradeflow.kernel.base import IdentityKernel, CheckIfDone, StateToObservation
-from tradeflow.kernel.manager import  BasePortfolioManager
-from tradeflow.kernel.action import ActionToMarketOrder
+from tradeflow.kernel.base import IdentityKernel, CheckIfDone, StateToDictSpace, StateToBoxSpace, StateToFlatSpace
+from tradeflow.kernel.manager import BasePortfolioManager
+from tradeflow.kernel.action import AssetActionToMarketOrder, DiscreteActionToMarketOrder
 from tradeflow.kernel.reward import ClosedTradeRewardFn
 from tradeflow.kernel.iterator import PandasMarketEpisodeIterator, PandasMarketStepIterator
 
@@ -57,13 +57,26 @@ class PortfolioManager(Node):
         )
 
 
-class ActionToOrder(Node):
+class DiscreteActionToOrder(Node):
     """
-    Maps abstract MDP actions to PortfolioManger specific orders
+    Maps  MDP actions from gym.spaces.Discrete to PortfolioManger specific orders.
     """
-    def __init__(self, name='ActionMapper', **kwargs):
+    def __init__(self, name='DiscreteActionMapper', **kwargs):
         super().__init__(
-            kernel_class_ref=ActionToMarketOrder,
+            kernel_class_ref=DiscreteActionToMarketOrder,
+            name=name,
+            **kwargs
+        )
+
+
+class AssetActionToOrder(Node):
+    """
+    Maps MDP actions from btgym.spaces.ActionDictSpace to PortfolioManger specific orders.
+
+    """
+    def __init__(self, name='AssetActionMapper', **kwargs):
+        super().__init__(
+            kernel_class_ref=AssetActionToMarketOrder,
             name=name,
             **kwargs
         )
@@ -93,13 +106,37 @@ class Done(Node):
         )
 
 
-class Observation(Node):
+class ToDictSpace(Node):
     """
-    Maps states to [possibly nested] observation tensors
+    Maps state to instance of btgym.spaces.DictSpace
     """
-    def __init__(self, name='StateToObservation', **kwargs):
+    def __init__(self, name='StateToDictSpace', **kwargs):
         super().__init__(
-            kernel_class_ref=StateToObservation,
+            kernel_class_ref=StateToDictSpace,
+            name=name,
+            **kwargs
+        )
+
+
+class ToBoxSpace(Node):
+    """
+    Maps state to instance of gym.spaces.BoxSpace
+    """
+    def __init__(self, name='StateToBoxSpace', **kwargs):
+        super().__init__(
+            kernel_class_ref=StateToBoxSpace,
+            name=name,
+            **kwargs
+        )
+
+
+class ToFlatSpace(Node):
+    """
+    Maps state to single-dimensional gym.spaces.BoxSpace
+    """
+    def __init__(self, name='StateToFlatSpace', **kwargs):
+        super().__init__(
+            kernel_class_ref=StateToFlatSpace,
             name=name,
             **kwargs
         )
